@@ -1,0 +1,172 @@
+# ============================================================
+# PolyFlow - Proyecto 1 (EIF400 - Paradigmas de Programacion)
+# Etapa 1: BASIC-256 - Limpieza y validacion de datos
+#
+# Entrada : estaciones_raw.csv
+#           (ID,ESTACION,TEMPERATURA,PRECIPITACION,VIENTO,BATERIA)
+# Salidas : datos_normalizados.csv  -> registros validos
+#           errores.csv             -> registros descartados + motivo
+#
+# Reglas de validacion:
+#   - Ningun campo puede estar vacio ni faltar
+#   - TEMPERATURA, PRECIPITACION, VIENTO y BATERIA deben ser numericos
+#   - TEMPERATURA debe estar entre TEMP_MIN y TEMP_MAX
+#   - PRECIPITACION no puede ser negativa
+#   - VIENTO no puede ser negativo
+#   - BATERIA debe estar entre 0 y 100
+#
+# Politica: los registros invalidos se EXCLUYEN de la salida normal
+# y se registran aparte con su motivo (facil de cambiar en el futuro).
+# ============================================================
+
+# --- Parametros de validacion ---
+TEMP_MIN = 15
+TEMP_MAX = 45
+BATERIA_MIN = 0
+BATERIA_MAX = 100
+CAMPOS_ESPERADOS = 6
+
+archivoEntrada$ = "estaciones_raw.csv"
+archivoSalida$  = "datos_normalizados.csv"
+archivoErrores$ = "errores.csv"
+
+# --- Verificacion de seguridad: el archivo de entrada debe existir ---
+# Si esto falla, casi siempre es porque estaciones_raw.csv no esta
+# guardado en la misma carpeta que este script.
+
+print "Directorio actual: " + currentdir()
+if not exists(archivoEntrada$) then
+	print "ERROR: no se encontro " + archivoEntrada$ + " en esta carpeta."
+	print "Guarda estaciones_raw.csv junto a este .kbs y vuelve a correr."
+	end
+end if
+
+# --- Reiniciar salidas (evita arrastrar datos de corridas anteriores) ---
+if exists(archivoSalida$) then
+	kill archivoSalida$
+end if
+if exists(archivoErrores$) then
+	kill archivoErrores$
+end if
+
+# --- Contadores (para el resumen final) ---
+totalLeidos = 0
+totalValidos = 0
+totalInvalidos = 0
+
+# --- Abrir archivos: 0 = entrada, 1 = normalizados, 2 = errores ---
+open 0, archivoEntrada$
+open 1, archivoSalida$
+open 2, archivoErrores$
+
+writeline 1, "ID,ESTACION,TEMPERATURA,PRECIPITACION,VIENTO,BATERIA"
+writeline 2, "ID,ESTACION,MOTIVO"
+
+# Saltar el encabezado del archivo de entrada
+encabezado$ = readline(0)
+
+# --- Ciclo principal: recorre cada linea del archivo de entrada ---
+while not eof(0)
+
+	linea$ = readline(0)
+
+	if trim(linea$) <> "" then
+
+		totalLeidos = totalLeidos + 1
+		campos$ = explode(linea$, ",")
+
+		esValido = true
+		motivo$ = ""
+
+		# 1) Cantidad de campos correcta y ninguno vacio
+		if campos$[?] <> CAMPOS_ESPERADOS then
+			esValido = false
+			motivo$ = "CAMPO_FALTANTE"
+		else
+			for i = 0 to CAMPOS_ESPERADOS - 1
+				if trim(campos$[i]) = "" then
+					esValido = false
+					motivo$ = "CAMPO_FALTANTE"
+				end if
+			next i
+		end if
+
+		# 2) Solo seguimos revisando tipo/rango si la estructura esta OK
+		if esValido then
+
+			id$ = trim(campos$[0])
+			estacion$ = trim(campos$[1])
+			tempTxt$ = trim(campos$[2])
+			precipTxt$ = trim(campos$[3])
+			vientoTxt$ = trim(campos$[4])
+			bateriaTxt$ = trim(campos$[5])
+
+			if not isnumeric(tempTxt$) or not isnumeric(precipTxt$) or not isnumeric(vientoTxt$) or not isnumeric(bateriaTxt$) then
+				esValido = false
+				motivo$ = "VALOR_NO_NUMERICO"
+			else
+				temperatura = float(tempTxt$)
+				precipitacion = float(precipTxt$)
+				viento = float(vientoTxt$)
+				bateria = float(bateriaTxt$)
+			end if
+
+			if esValido then
+				if temperatura < TEMP_MIN or temperatura > TEMP_MAX then
+					esValido = false
+					motivo$ = "TEMPERATURA_INVALIDA"
+				end if
+			end if
+
+			if esValido then
+				if precipitacion < 0 then
+					esValido = false
+					motivo$ = "PRECIPITACION_NEGATIVA"
+				end if
+			end if
+
+			if esValido then
+				if viento < 0 then
+					esValido = false
+					motivo$ = "VIENTO_NEGATIVO"
+				end if
+			end if
+
+			if esValido then
+				if bateria < BATERIA_MIN or bateria > BATERIA_MAX then
+					esValido = false
+					motivo$ = "BATERIA_FUERA_RANGO"
+				end if
+			end if
+
+		end if
+
+		# 3) Escribir el registro en la salida que corresponda
+		if esValido then
+			writeline 1, id$ + "," + estacion$ + "," + tempTxt$ + "," + precipTxt$ + "," + vientoTxt$ + "," + bateriaTxt$
+			totalValidos = totalValidos + 1
+		else
+			idErr$ = trim(campos$[0])
+			estErr$ = ""
+			if campos$[?] >= 2 then
+				estErr$ = trim(campos$[1])
+			end if
+			writeline 2, idErr$ + "," + estErr$ + "," + motivo$
+			totalInvalidos = totalInvalidos + 1
+		end if
+
+	end if
+
+end while
+
+close 0
+close 1
+close 2
+
+# --- Resumen en pantalla ---
+print "===== Etapa 1 - BASIC-256: limpieza y validacion ====="
+print "Registros leidos:    " + totalLeidos
+print "Registros validos:   " + totalValidos
+print "Registros invalidos: " + totalInvalidos
+print "-> " + archivoSalida$
+print "-> " + archivoErrores$
