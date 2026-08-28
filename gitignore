@@ -1,0 +1,11 @@
+# Fortran
+*.exe
+*.o
+*.mod
+
+# Java
+*.class
+
+# Sistema
+.DS_Store
+Thumbs.db
