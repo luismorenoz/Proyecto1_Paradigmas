@@ -1,0 +1,6 @@
+VERIFICACION DE INTEGRIDAD - ETAPA 4 (C)
+Archivo procesado: alertas.csv
+Alertas procesadas: 5
+Lineas con error de formato: 0
+CHECKSUM FINAL: 95
+ESTADO: OK
