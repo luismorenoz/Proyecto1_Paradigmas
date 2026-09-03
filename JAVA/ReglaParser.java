@@ -1,6 +1,8 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -14,13 +16,18 @@ import java.util.Set;
  */
 public class ReglaParser {
 
-    private static final Set<String> IDENTIFICADORES_VALIDOS = Set.of(
+    // Nota: Set.of(...) es de Java 9+; usamos HashSet + Arrays.asList
+    // (disponible desde Java 5) para que el bytecode sea compatible con
+    // Java 8, sin cambiar el comportamiento (sigue siendo un set de solo
+    // lectura desde el punto de vista de este parser: solo se consulta
+    // con contains(), nunca se modifica).
+    private static final Set<String> IDENTIFICADORES_VALIDOS = new HashSet<>(Arrays.asList(
         "TEMP_ALTA", "LLUVIA_INTENSA", "VIENTO_FUERTE", "BATERIA_BAJA"
-    );
+    ));
 
-    private static final Set<String> OPERADORES_VALIDOS = Set.of(
+    private static final Set<String> OPERADORES_VALIDOS = new HashSet<>(Arrays.asList(
         ">", "<", ">=", "<="
-    );
+    ));
 
     /**
      * Lee reglas.txt linea por linea. Las lineas validas se agregan a la lista

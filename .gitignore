@@ -1,0 +1,16 @@
+# Fortran
+*.exe
+*.o
+*.mod
+
+# Java
+*.class
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Carpeta de trabajo compartida del pipeline (se regenera en cada corrida)
+data/*.csv
+data/*.txt
+!data/.gitkeep
